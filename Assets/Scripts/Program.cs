@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO.Ports;
@@ -14,6 +15,10 @@ public class Program : MonoBehaviour
     public Dropdown dropDown_PortNames;
     public Button button_Connect;
 
+    private float MOVING_RATIO = 1.0f;
+    private float UPDATE_PERIOD = 0.1f;
+    private float duration;
+
     public void OnButtonLeft()
     {
         direction_command = -1;
@@ -27,6 +32,18 @@ public class Program : MonoBehaviour
     public void OnButtonRight()
     {
         direction_command = 1;
+    }
+
+    public void OnHitLeft(bool hit)
+    {
+        Debug.Log("OnHitLeft: " + hit.ToString());
+        modbusManager.WriteCoil(0, hit);
+    }
+
+    public void OnHitRight(bool hit)
+    {
+        Debug.Log("OnHitRight: " + hit.ToString());
+        modbusManager.WriteCoil(1, hit);
     }
 
     public void OnConnect()
@@ -66,11 +83,21 @@ public class Program : MonoBehaviour
     {
         if (direction_command == -1)
         {
-            sphere.Translate(-Time.deltaTime, 0, 0);
+            sphere.Translate(-Time.deltaTime* MOVING_RATIO, 0, 0);
         }
         else if (direction_command == 1)
         {
-            sphere.Translate(Time.deltaTime, 0, 0);
+            sphere.Translate(Time.deltaTime* MOVING_RATIO, 0, 0);
+        }
+
+        duration += Time.deltaTime;
+        if (duration > UPDATE_PERIOD)
+        {
+            duration -= UPDATE_PERIOD;
+
+            ushort position = Convert.ToUInt16((sphere.transform.localPosition.x + 5.0f) * 1000);
+            modbusManager.WriteRegister(0, position);
+            //Debug.Log("position: " + position.ToString());
         }
     }
 }

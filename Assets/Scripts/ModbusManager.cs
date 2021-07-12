@@ -11,8 +11,18 @@ public class ModbusManager : MonoBehaviour
 
     private const int SLAVE_ADDRESS = 1;
     private const int COIL_ADDRESS = 0;
+    private const int COIL_COUNT = 10;
     private const int ISTS_ADDRESS = 100;
+    private const int ISTS_COUNT = 10;
     private const int HREG_ADDRESS = 200;
+    private const int HREG_COUNT = 10;
+
+    private float UPDATE_PERIOD = 0.1f;
+    private float duration;
+
+    private bool[] mb_coil = new bool[COIL_COUNT];
+    private bool[] mb_ists = new bool[ISTS_COUNT];
+    private ushort[] mb_hreg = new ushort[HREG_COUNT];
 
     public bool Connect(string portName)
     {
@@ -48,20 +58,40 @@ public class ModbusManager : MonoBehaviour
         return false;
     }
 
+    public bool WriteCoil(ushort addr, bool value)
+    {
+        if (IsConnected())
+        {
+            _master.WriteSingleCoil(SLAVE_ADDRESS, addr, value);
+            return true;
+        }
+        return false;
+    }
+
+    public bool WriteRegister(ushort addr, ushort value)
+    {
+        if (IsConnected())
+        {
+            _master.WriteSingleRegister(SLAVE_ADDRESS, addr, value);
+            return true;
+        }
+        return false;
+    }
+
     public void ReadState()
     {
         // Read the current state of the output
-        var coils = _master.ReadCoils(SLAVE_ADDRESS, COIL_ADDRESS, 10);
-        Debug.Log(coils[0].ToString());
-        Debug.Log(coils[1].ToString());
+        mb_coil = _master.ReadCoils(SLAVE_ADDRESS, COIL_ADDRESS, 10);
+        Debug.Log(mb_coil[0].ToString());
+        Debug.Log(mb_coil[1].ToString());
 
-        var istss = _master.ReadInputs(SLAVE_ADDRESS, ISTS_ADDRESS, 10);
-        Debug.Log(istss[0].ToString());
-        Debug.Log(istss[1].ToString());
+        mb_ists = _master.ReadInputs(SLAVE_ADDRESS, ISTS_ADDRESS, 10);
+        Debug.Log(mb_ists[0].ToString());
+        Debug.Log(mb_ists[1].ToString());
 
-        var hregs = _master.ReadHoldingRegisters(SLAVE_ADDRESS, HREG_ADDRESS, 10);
-        Debug.Log(hregs[0].ToString());
-        Debug.Log(hregs[1].ToString());
+        mb_hreg = _master.ReadHoldingRegisters(SLAVE_ADDRESS, HREG_ADDRESS, 10);
+        Debug.Log(mb_hreg[0].ToString());
+        Debug.Log(mb_hreg[1].ToString());
         //// Update the UI
         //if (state[0])
         //{
@@ -76,12 +106,21 @@ public class ModbusManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        
+
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+        duration += Time.deltaTime;
+        if (duration > UPDATE_PERIOD)
+        {
+            duration -= UPDATE_PERIOD;
+
+            if (IsConnected())
+            {
+                ReadState();
+            }
+        }
     }
 }
