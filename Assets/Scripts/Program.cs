@@ -50,14 +50,21 @@ public class Program : MonoBehaviour
     {
         if (!modbusManager.IsConnected())
         {
-            if (modbusManager.Connect(dropDown_PortNames.options[dropDown_PortNames.value].text))
+            string portName = dropDown_PortNames.options[dropDown_PortNames.value].text;
+            if (modbusManager.Connect(portName))
             {
+                Debug.Log("Modbus Connected with " + portName);
                 button_Connect.GetComponentInChildren<Text>().text = "Disconnect";
+            }
+            else
+            {
+                Debug.Log("Modbus Connection failed with " + portName);
             }
         }
         else
         {
             modbusManager.Disconnect();
+            Debug.Log("Modbus disconnected");
             button_Connect.GetComponentInChildren<Text>().text = "Connect";
         }
     }
@@ -81,6 +88,22 @@ public class Program : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (modbusManager.IsConnected())
+        {
+            if (modbusManager.ReadISTS(0))
+            {
+                direction_command = -1;
+            }
+            else if (modbusManager.ReadISTS(1))
+            {
+                direction_command = 1;
+            }
+            else
+            {
+                direction_command = 0;
+            }
+        }
+
         if (direction_command == -1)
         {
             sphere.Translate(-Time.deltaTime* MOVING_RATIO, 0, 0);
@@ -95,9 +118,12 @@ public class Program : MonoBehaviour
         {
             duration -= UPDATE_PERIOD;
 
-            ushort position = Convert.ToUInt16((sphere.transform.localPosition.x + 5.0f) * 1000);
-            modbusManager.WriteRegister(0, position);
-            //Debug.Log("position: " + position.ToString());
+            if (modbusManager.IsConnected())
+            {
+                ushort position = Convert.ToUInt16((sphere.transform.localPosition.x + 5.0f) * 25.5f);
+                modbusManager.WriteRegister(200, position);
+                //Debug.Log("position: " + position.ToString());
+            }
         }
     }
 }

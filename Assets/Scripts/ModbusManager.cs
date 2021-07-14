@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -28,14 +29,14 @@ public class ModbusManager : MonoBehaviour
     {
         if (_port == null && _master == null)
         {
-            _port = new SerialPort(portName, 9600);
-            _port.ReadTimeout = 100;
-            _port.WriteTimeout = 100;
+            _port = new SerialPort(portName, 115200, Parity.None, 8, StopBits.One);
+            _port.ReadTimeout = 500;
+            _port.WriteTimeout = 500;
             _port.Open();
 
             _master = ModbusSerialMaster.CreateRtu(_port);
 
-            ReadState();
+            //ReadState();
             return true;
         }
         return false;
@@ -68,6 +69,15 @@ public class ModbusManager : MonoBehaviour
         return false;
     }
 
+    public bool ReadISTS(ushort addr)
+    {
+        if (IsConnected())
+        {
+            return mb_ists[addr];
+        }
+        return false;
+    }
+
     public bool WriteRegister(ushort addr, ushort value)
     {
         if (IsConnected())
@@ -80,27 +90,34 @@ public class ModbusManager : MonoBehaviour
 
     public void ReadState()
     {
-        // Read the current state of the output
-        mb_coil = _master.ReadCoils(SLAVE_ADDRESS, COIL_ADDRESS, 10);
-        Debug.Log(mb_coil[0].ToString());
-        Debug.Log(mb_coil[1].ToString());
+        try
+        {
+            // Read the current state of the output
+            //mb_coil = _master.ReadCoils(SLAVE_ADDRESS, COIL_ADDRESS, 10);
+            //Debug.Log(mb_coil[0].ToString());
+            //Debug.Log(mb_coil[1].ToString());
 
-        mb_ists = _master.ReadInputs(SLAVE_ADDRESS, ISTS_ADDRESS, 10);
-        Debug.Log(mb_ists[0].ToString());
-        Debug.Log(mb_ists[1].ToString());
+            mb_ists = _master.ReadInputs(SLAVE_ADDRESS, ISTS_ADDRESS, 10);
+            Debug.Log(mb_ists[0].ToString());
+            Debug.Log(mb_ists[1].ToString());
 
-        mb_hreg = _master.ReadHoldingRegisters(SLAVE_ADDRESS, HREG_ADDRESS, 10);
-        Debug.Log(mb_hreg[0].ToString());
-        Debug.Log(mb_hreg[1].ToString());
-        //// Update the UI
-        //if (state[0])
-        //{
-        //    StateLabel.Text = "On";
-        //}
-        //else
-        //{
-        //    StateLabel.Text = "Off";
-        //}
+            //mb_hreg = _master.ReadHoldingRegisters(SLAVE_ADDRESS, HREG_ADDRESS, 10);
+            //Debug.Log(mb_hreg[0].ToString());
+            //Debug.Log(mb_hreg[1].ToString());
+            //// Update the UI
+            //if (state[0])
+            //{
+            //    StateLabel.Text = "On";
+            //}
+            //else
+            //{
+            //    StateLabel.Text = "Off";
+            //}
+        }
+        catch (Exception ex)
+        {
+            Debug.Log(ex.ToString());
+        }
     }
 
     // Start is called before the first frame update
