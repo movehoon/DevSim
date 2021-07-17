@@ -15,6 +15,9 @@ public class Program : MonoBehaviour
     public Dropdown dropDown_PortNames;
     public Button button_Connect;
 
+    public GameObject LeftLight;
+    public GameObject RightLight;
+
     private float MOVING_RATIO = 1.0f;
     private float UPDATE_PERIOD = 0.1f;
     private float duration;
@@ -38,12 +41,14 @@ public class Program : MonoBehaviour
     {
         Debug.Log("OnHitLeft: " + hit.ToString());
         modbusManager.WriteCoil(0, hit);
+        LeftLight.SetActive(hit);
     }
 
     public void OnHitRight(bool hit)
     {
         Debug.Log("OnHitRight: " + hit.ToString());
         modbusManager.WriteCoil(1, hit);
+        RightLight.SetActive(hit);
     }
 
     public void OnConnect()
