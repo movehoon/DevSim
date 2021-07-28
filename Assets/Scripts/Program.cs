@@ -53,7 +53,7 @@ public class Program : MonoBehaviour
 
     public void OnConnect()
     {
-        if (!modbusManager.IsConnected())
+        if (!modbusManager.IsConnected)
         {
             string portName = dropDown_PortNames.options[dropDown_PortNames.value].text;
             if (modbusManager.Connect(portName))
@@ -93,13 +93,13 @@ public class Program : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (modbusManager.IsConnected())
+        if (modbusManager.IsConnected)
         {
-            if (modbusManager.ReadISTS(0))
+            if (modbusManager.ReadCoil(0))
             {
                 direction_command = -1;
             }
-            else if (modbusManager.ReadISTS(1))
+            else if (modbusManager.ReadCoil(1))
             {
                 direction_command = 1;
             }
@@ -123,10 +123,10 @@ public class Program : MonoBehaviour
         {
             duration -= UPDATE_PERIOD;
 
-            if (modbusManager.IsConnected())
+            if (modbusManager.IsConnected)
             {
                 ushort position = Convert.ToUInt16((sphere.transform.localPosition.x + 5.0f) * 25.5f);
-                modbusManager.WriteRegister(200, position);
+                modbusManager.WriteRegister(0, position);
                 //Debug.Log("position: " + position.ToString());
             }
         }

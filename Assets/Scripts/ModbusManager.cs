@@ -10,22 +10,22 @@ public class ModbusManager : MonoBehaviour
     SerialPort _port;
     ModbusSerialMaster _master;
 
-    private const int SLAVE_ADDRESS = 1;
-    private const int COIL_ADDRESS = 0;
-    private const int COIL_COUNT = 10;
-    private const int ISTS_ADDRESS = 100;
-    private const int ISTS_COUNT = 10;
-    private const int HREG_ADDRESS = 200;
-    private const int HREG_COUNT = 10;
+    private byte SLAVE_ADDRESS = 1;
+    private const int COIL_ADDRESS = 0; // DIN1~4
+    private const int COIL_COUNT = 4;
+    //private const int ISTS_ADDRESS = 0;
+    //private const int ISTS_COUNT = 8;
+    private const int HREG_ADDRESS = 0;
+    private const int HREG_COUNT = 4;
 
     private float UPDATE_PERIOD = 0.1f;
     private float duration;
 
     private bool[] mb_coil = new bool[COIL_COUNT];
-    private bool[] mb_ists = new bool[ISTS_COUNT];
+    //private bool[] mb_ists = new bool[ISTS_COUNT];
     private ushort[] mb_hreg = new ushort[HREG_COUNT];
 
-    public bool Connect(string portName)
+    public bool Connect(string portName, byte slave_addr = 1)
     {
         if (_port == null && _master == null)
         {
@@ -35,6 +35,7 @@ public class ModbusManager : MonoBehaviour
             _port.Open();
 
             _master = ModbusSerialMaster.CreateRtu(_port);
+            SLAVE_ADDRESS = slave_addr;
 
             //ReadState();
             return true;
@@ -52,16 +53,26 @@ public class ModbusManager : MonoBehaviour
         _port = null;
     }
 
-    public bool IsConnected()
+    public bool IsConnected
     {
-        if (_port != null)
-            return _port.IsOpen;
+        get
+        {
+            if (_port != null)
+                return _port.IsOpen;
+            return false;
+        }
+    }
+    public bool ReadCoil(ushort addr)
+    {
+        if (IsConnected)
+        {
+            return mb_coil[addr];
+        }
         return false;
     }
-
     public bool WriteCoil(ushort addr, bool value)
     {
-        if (IsConnected())
+        if (IsConnected)
         {
             _master.WriteSingleCoil(SLAVE_ADDRESS, addr, value);
             return true;
@@ -69,18 +80,25 @@ public class ModbusManager : MonoBehaviour
         return false;
     }
 
-    public bool ReadISTS(ushort addr)
+    //public bool ReadISTS(ushort addr)
+    //{
+    //    if (IsConnected)
+    //    {
+    //        return mb_ists[addr];
+    //    }
+    //    return false;
+    //}
+    public ushort ReadRegister(ushort addr)
     {
-        if (IsConnected())
+        if (IsConnected)
         {
-            return mb_ists[addr];
+            return mb_hreg[addr];
         }
-        return false;
+        return 0;
     }
-
     public bool WriteRegister(ushort addr, ushort value)
     {
-        if (IsConnected())
+        if (IsConnected)
         {
             _master.WriteSingleRegister(SLAVE_ADDRESS, addr, value);
             return true;
@@ -93,17 +111,17 @@ public class ModbusManager : MonoBehaviour
         try
         {
             // Read the current state of the output
-            //mb_coil = _master.ReadCoils(SLAVE_ADDRESS, COIL_ADDRESS, 10);
-            //Debug.Log(mb_coil[0].ToString());
-            //Debug.Log(mb_coil[1].ToString());
+            mb_coil = _master.ReadCoils(SLAVE_ADDRESS, COIL_ADDRESS, 10);
+            Debug.Log(mb_coil[0].ToString());
+            Debug.Log(mb_coil[1].ToString());
 
-            mb_ists = _master.ReadInputs(SLAVE_ADDRESS, ISTS_ADDRESS, 10);
-            Debug.Log(mb_ists[0].ToString());
-            Debug.Log(mb_ists[1].ToString());
+            //mb_ists = _master.ReadInputs(SLAVE_ADDRESS, ISTS_ADDRESS, 10);
+            //Debug.Log(mb_ists[0].ToString());
+            //Debug.Log(mb_ists[1].ToString());
 
-            //mb_hreg = _master.ReadHoldingRegisters(SLAVE_ADDRESS, HREG_ADDRESS, 10);
-            //Debug.Log(mb_hreg[0].ToString());
-            //Debug.Log(mb_hreg[1].ToString());
+            mb_hreg = _master.ReadHoldingRegisters(SLAVE_ADDRESS, HREG_ADDRESS, 10);
+            Debug.Log(mb_hreg[0].ToString());
+            Debug.Log(mb_hreg[1].ToString());
             //// Update the UI
             //if (state[0])
             //{
@@ -134,7 +152,7 @@ public class ModbusManager : MonoBehaviour
         {
             duration -= UPDATE_PERIOD;
 
-            if (IsConnected())
+            if (IsConnected)
             {
                 ReadState();
             }
