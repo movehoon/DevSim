@@ -4,11 +4,24 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO.Ports;
 using Modbus.Device;
+using System.Net.Sockets;
 
+public enum ModbusInterface
+{
+    RTU,
+    TCP,
+}
 public class ModbusManager : MonoBehaviour
 {
+    public ModbusInterface modbusInterface;
+
+    ModbusMaster _master;
+
     SerialPort _port;
-    ModbusSerialMaster _master;
+    //ModbusSerialMaster _master;
+
+    TcpClient _tcpClient;
+    //ModbusIpMaster _master;
 
     private byte SLAVE_ADDRESS = 1;
     private const int COIL_ADDRESS = 0; // DIN1~4
@@ -25,20 +38,35 @@ public class ModbusManager : MonoBehaviour
     //private bool[] mb_ists = new bool[ISTS_COUNT];
     private ushort[] mb_hreg = new ushort[HREG_COUNT];
 
-    public bool Connect(string portName, byte slave_addr = 1)
+    public bool Connect(string name, byte slave_addr = 1)
     {
-        if (_port == null && _master == null)
+        if (modbusInterface == ModbusInterface.RTU)
         {
-            _port = new SerialPort(portName, 115200, Parity.None, 8, StopBits.One);
-            _port.ReadTimeout = 500;
-            _port.WriteTimeout = 500;
-            _port.Open();
+            if (_port == null && _master == null)
+            {
+                _port = new SerialPort(name, 115200, Parity.None, 8, StopBits.One);
+                _port.ReadTimeout = 500;
+                _port.WriteTimeout = 500;
+                _port.Open();
 
-            _master = ModbusSerialMaster.CreateRtu(_port);
-            SLAVE_ADDRESS = slave_addr;
+                _master = ModbusSerialMaster.CreateRtu(_port);
+                SLAVE_ADDRESS = slave_addr;
 
-            //ReadState();
-            return true;
+                //ReadState();
+                return true;
+            }
+        }
+        else if (modbusInterface == ModbusInterface.TCP)
+        {
+            if (_tcpClient == null && _master == null)
+            {
+                //_tcpClient = new TcpClient("192.168.1.2", 502);
+                _tcpClient = new TcpClient(name, 502);
+                _master = ModbusIpMaster.CreateIp(_tcpClient);
+                SLAVE_ADDRESS = slave_addr;
+
+                return true;
+            }
         }
         return false;
     }
@@ -48,23 +76,39 @@ public class ModbusManager : MonoBehaviour
         _master.Dispose();
         _master = null;
 
-        _port.Close();
-        _port.Dispose();
-        _port = null;
+        if (modbusInterface == ModbusInterface.RTU)
+        {
+            _port.Close();
+            _port.Dispose();
+            _port = null;
+        }
+        else if (modbusInterface == ModbusInterface.TCP)
+        {
+            _tcpClient.Close();
+            _tcpClient = null;
+        }
     }
 
-    public bool IsConnected
+    public bool Connected
     {
         get
         {
-            if (_port != null)
-                return _port.IsOpen;
+            if (modbusInterface == ModbusInterface.RTU)
+            {
+                if (_port != null)
+                    return _port.IsOpen;
+            }
+            else if (modbusInterface == ModbusInterface.TCP)
+            {
+                if (_tcpClient != null)
+                    return _tcpClient.Connected;
+            }
             return false;
         }
     }
     public bool ReadCoil(ushort addr)
     {
-        if (IsConnected)
+        if (Connected)
         {
             return mb_coil[addr];
         }
@@ -72,8 +116,10 @@ public class ModbusManager : MonoBehaviour
     }
     public bool WriteCoil(ushort addr, bool value)
     {
-        if (IsConnected)
+        Debug.Log("WriteCoil");
+        if (Connected)
         {
+            Debug.Log("WriteCoil, Slave:" + SLAVE_ADDRESS + ", Addr: " + addr + ", value: " + value);
             _master.WriteSingleCoil(SLAVE_ADDRESS, addr, value);
             return true;
         }
@@ -82,7 +128,7 @@ public class ModbusManager : MonoBehaviour
 
     //public bool ReadISTS(ushort addr)
     //{
-    //    if (IsConnected)
+    //    if (Connected)
     //    {
     //        return mb_ists[addr];
     //    }
@@ -90,7 +136,7 @@ public class ModbusManager : MonoBehaviour
     //}
     public ushort ReadRegister(ushort addr)
     {
-        if (IsConnected)
+        if (Connected)
         {
             return mb_hreg[addr];
         }
@@ -98,7 +144,7 @@ public class ModbusManager : MonoBehaviour
     }
     public bool WriteRegister(ushort addr, ushort value)
     {
-        if (IsConnected)
+        if (Connected)
         {
             _master.WriteSingleRegister(SLAVE_ADDRESS, addr, value);
             return true;
@@ -112,16 +158,16 @@ public class ModbusManager : MonoBehaviour
         {
             // Read the current state of the output
             mb_coil = _master.ReadCoils(SLAVE_ADDRESS, COIL_ADDRESS, 10);
-            Debug.Log(mb_coil[0].ToString());
-            Debug.Log(mb_coil[1].ToString());
+            //Debug.Log(mb_coil[0].ToString());
+            //Debug.Log(mb_coil[1].ToString());
 
             //mb_ists = _master.ReadInputs(SLAVE_ADDRESS, ISTS_ADDRESS, 10);
             //Debug.Log(mb_ists[0].ToString());
             //Debug.Log(mb_ists[1].ToString());
 
             mb_hreg = _master.ReadHoldingRegisters(SLAVE_ADDRESS, HREG_ADDRESS, 10);
-            Debug.Log(mb_hreg[0].ToString());
-            Debug.Log(mb_hreg[1].ToString());
+            //Debug.Log(mb_hreg[0].ToString());
+            //Debug.Log(mb_hreg[1].ToString());
             //// Update the UI
             //if (state[0])
             //{
@@ -152,7 +198,7 @@ public class ModbusManager : MonoBehaviour
         {
             duration -= UPDATE_PERIOD;
 
-            if (IsConnected)
+            if (Connected)
             {
                 ReadState();
             }

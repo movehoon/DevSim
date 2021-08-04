@@ -1157,6 +1157,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: da74fed042f344ac69d4a25b1234123a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  modbusInterface: 1
 --- !u!1 &506584181
 GameObject:
   m_ObjectHideFlags: 0
