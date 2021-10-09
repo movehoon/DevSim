@@ -58,3 +58,15 @@ sysinfo.txt
 # Crashlytics generated file
 crashlytics-build.properties
 
+
+# External Library
+/Assets/Rescue3DAssets
+/Assets/Rescue3DAssets.meta
+/Assets/FreeForkLift
+/Assets/FreeForkLift.meta
+/Assets/RPG_FPS_game_assets_industrial
+/Assets/RPG_FPS_game_assets_industrial.meta
+/Assets/small_town_america
+/Assets/small_town_america.meta
+
+
