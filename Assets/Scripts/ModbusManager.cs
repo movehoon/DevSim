@@ -60,6 +60,7 @@ public class ModbusManager : MonoBehaviour
         {
             if (_tcpClient == null && _master == null)
             {
+                Debug.Log("Connect to " + name.ToString());
                 //_tcpClient = new TcpClient("192.168.1.2", 502);
                 _tcpClient = new TcpClient(name, 502);
                 _master = ModbusIpMaster.CreateIp(_tcpClient);
